@@ -13,30 +13,43 @@ import Graphics.Gloss
 
 type Position = (Int, Int)
 
-data Cell = Cell {position :: Position, is_live :: Bool}
+newtype Cell = Cell Bool
 
 type Population = V.Vector Cell
 
 data World = World
              {
-               width :: Int,
-               height :: Int,
+               worldWidth :: Int,
+               worldHeight :: Int,
                population :: Population
              }
 
-renderWorld :: World -> Picture
-renderWorld = Pictures . V.toList . V.map renderCell . population
+posFromIdx :: Int -> Int -> Position
+posFromIdx width idx =
+    let yy = floor (fromIntegral idx / fromIntegral width)
+        xx = idx `mod` width
+    in (xx, yy)
 
-renderCell :: Cell -> Picture
-renderCell (Cell (xx, yy) live)
+idxFromPos :: Int -> Position -> Int
+idxFromPos width (xx, yy) = width * yy + xx
+
+mapWorld :: (Position -> Cell -> a) -> World -> V.Vector a
+mapWorld fn (World width height pop) = V.generate (V.length pop) mapCell
+    where mapCell idx = fn (posFromIdx width idx) (pop V.! idx)
+
+renderWorld :: World -> Picture
+renderWorld = Pictures . V.toList . mapWorld renderCell
+
+renderCell :: Position -> Cell -> Picture
+renderCell (xx, yy) (Cell live)
     | live = Translate (fromIntegral xx) (fromIntegral yy) $ rectangleSolid 1 1
     | otherwise = Blank
 
 getCell :: World -> Position -> Cell
-getCell world (xx, yy) = (population world) V.! ((width world) * yy + xx)
+getCell (World width _ pop) pos = pop V.! idxFromPos width pos
 
-neighborCells :: Population -> Int -> Position -> [Cell]
-neighborCells pop width (px, py) = map (pop V.!) adjacentIndices
+neighborCells :: World -> Position -> [Cell]
+neighborCells (World width _ pop) (px, py) = map (pop V.!) adjacentIndices
     where
       deltas = [-1, 0, 1]
       len = V.length pop
@@ -46,27 +59,26 @@ neighborCells pop width (px, py) = map (pop V.!) adjacentIndices
 
 countLiveCells :: [Cell] -> Int
 countLiveCells = foldl' live 0
-    where live acc (Cell _ cell_live)
+    where live acc (Cell cell_live)
               | cell_live = acc + 1
               | otherwise = acc
 
-ageCell :: World -> Position -> Cell
-ageCell world pos =
-    let liveNeighbors = countLiveCells $ neighborCells (population world) (width world) pos
-        cell_live = is_live (getCell world pos)
+ageCell :: World -> Position -> Cell -> Cell
+ageCell world pos (Cell cell_live) =
+    let liveNeighbors = countLiveCells $ neighborCells world pos
         lonely = liveNeighbors < 2
         crowded = liveNeighbors > 3
         spawn = liveNeighbors == 3 && not cell_live
-    in Cell pos (spawn || (not lonely && not crowded && cell_live))
+    in Cell $ spawn || (not lonely && not crowded && cell_live)
 
 stepWorld :: World -> World
-stepWorld world = world {population = V.map (ageCell world . position) $ population world}
+stepWorld world = world {population = mapWorld (ageCell world) world}
 
 newWorld :: Int -> Int -> World
-newWorld ww hh = World ww hh $ V.fromList [Cell (xx, yy) False | xx <- xrange, yy <- yrange]
-    where xrange = [0..(ww - 1)]
-          yrange = [0..(hh - 1)]
+newWorld width height = World width height $ V.replicate (width * height) (Cell False)
+    where xrange = [0..(width - 1)]
+          yrange = [0..(height - 1)]
 
-newWorld' :: Int -> [Cell] -> World
-newWorld' ww cells = World ww hh (V.fromList cells)
-    where hh = floor $ fromIntegral (length cells) / fromIntegral ww
+newWorld' :: Int -> Population -> World
+newWorld' width cells = World width height cells
+    where height = floor $ fromIntegral (V.length cells) / fromIntegral width
