@@ -59,9 +59,9 @@ neighborCells (World width pop) (px, py) = map (pop V.!) adjacentIndices
     where
       deltas = [-1, 0, 1]
       len = V.length pop
-      inBounds idx = idx >= 0 && idx < len
-      adjacentIndices = filter inBounds . map (\(dx, dy) -> ((py + dy) * width) + (px + dx)) $
-                        [(x, y) | x <- deltas, y <- deltas, not (x == 0 && y == 0)]
+      inBounds xx yy = xx >= 0 && xx < width && yy >= 0 && (idxFromPos width (xx, yy)) < len
+      adjacentIndices = [idxFromPos width (px + x, py + y) | x <- deltas, y <- deltas,
+                         not (x == 0 && y == 0), inBounds (px + x) (py + y)]
 
 -- Count the number of live cells in a list
 countLiveCells :: [Cell] -> Int
