@@ -31,7 +31,7 @@ initWorld = newWorld' 5 (V.fromList . map Cell $ cells)
                    
 deserializeWorld :: String -> IO World
 deserializeWorld packed = 
-    let toCell ch = Cell $ ch == '1'
+    let toCell = Cell . (== '1')
         valid ch = ch == '1' || ch == '0'
         cells = V.fromList . map toCell . filter valid $ packed
         width = length . takeWhile (/= '\n') $ packed

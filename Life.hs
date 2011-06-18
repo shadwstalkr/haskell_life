@@ -76,7 +76,7 @@ neighborCells (World width pop) (px, py) = map (pop V.!) adjacentIndices
     where
       deltas = [-1, 0, 1]
       len = V.length pop
-      inBounds xx yy = xx >= 0 && xx < width && yy >= 0 && (idxFromPos width (xx, yy)) < len
+      inBounds xx yy = xx >= 0 && xx < width && yy >= 0 && idxFromPos width (xx, yy) < len
       adjacentIndices = [idxFromPos width (px + x, py + y) | x <- deltas, y <- deltas,
                          not (x == 0 && y == 0), inBounds (px + x) (py + y)]
 
@@ -106,4 +106,4 @@ newWorld width height = World width $ V.replicate (width * height) (Cell False)
 
 -- Create a new world from a population
 newWorld' :: Int -> Population -> World
-newWorld' width cells = World width cells
+newWorld' = World
