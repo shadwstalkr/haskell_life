@@ -1,0 +1,15 @@
+Name:           life
+Version:        0.3
+Description:    Conway's game of life
+License:        GPL-3
+License-file:   COPYING
+Author:         Alex Midgley
+Maintainer:     alex@tapdancinggoats.com
+Homepage:       http://www.tapdancinggoats.com/
+Build-Type:     Simple
+Cabal-Version:  >= 1.4
+Extra-Source-Files: README.markdown Life.hs
+
+Executable life
+  Main-is:              Main.hs
+  Build-Depends:        base >= 3 && < 5, vector >= 0.7, gloss >= 1.3
