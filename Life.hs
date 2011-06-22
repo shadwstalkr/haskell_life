@@ -43,7 +43,7 @@ data World = World
 -- Get a position from a population index
 posFromIdx :: Int -> Int -> Position
 posFromIdx width idx =
-    let yy = floor (fromIntegral idx / fromIntegral width)
+    let yy = idx `div` width
         xx = idx `mod` width
     in (xx, yy)
 
